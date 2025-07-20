@@ -1,0 +1,138 @@
+---
+title: "git repos"
+author: "Vik Gopal"
+date: '2022-04-13'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(httr)
+library(readxl)
+library(tidyverse)
+```
+
+## Set-up
+```{r}
+owner_list <- c("user01", "user02")
+proj_repos <- c("dsa3101-2210-01", "dsa3101-2210-02")
+logfile_names <- c("01.log", "02.log")
+my_token <- readLines("gh_token.txt")
+base_url <- "https://api.github.com"
+owner <- "singator"
+url1 <- "https://api.github.com/repos/singator/dlp-material/contributors"
+set_config(add_headers(Authorization = paste("token", my_token), 
+                       Accept = "application/vnd.github.v3+json"))
+set_config(verbose())
+
+get_commit_details <- function(x) {
+  sha <- x[["sha"]]
+  message <- x[["commit"]][["message"]]
+  author <- x[["commit"]][["author"]][["name"]]
+  date <- x[["commit"]][["author"]][["date"]]
+  c(sha, message, author, date)
+}
+
+get_all_commits_gh_api <- function(repo_name) {
+  base_url <- "https://api.github.com"
+  owner <- "singator"
+  br_path <- paste("repos", owner, proj_repos[1], "branches", sep="/", collapse="")
+  all_branches <- GET(base_url, path=br_path)
+  all_br_out <- content(all_branches)
+  branch_names <- vapply(all_br_out, function(x) x[[1]], FUN.VALUE = "a")
+  # branch_names
+  
+  full_df <- NULL
+  for(br_name in branch_names) {
+    commit_path <- paste("repos", owner, proj_repos[1], "commits", sep="/", collapse="")
+    all_commits <- GET(base_url, path=commit_path, query=list(sha=br_name))
+    #http_status(all_commits)
+    all_commits_out <- content(all_commits)
+    all_commit_details <- t(vapply(all_commits_out, get_commit_details,  
+                                   FUN.VALUE = letters[1:4], USE.NAMES = FALSE))
+    colnames(all_commit_details) <- c("sha", "message", "author", "datetime")
+    all_commit_details <- as_tibble(all_commit_details) %>% 
+      mutate(branch = br_name, datetime =  strptime(datetime, "%Y-%m-%dT%H:%M:%S"))
+    full_df <- bind_rows(full_df, all_commit_details)
+  }
+  full_df
+}
+
+parse_git_logs <- function(fname) {
+  ftext <- readLines(fname)
+  ids <- which(str_detect(ftext, "file[s]* changed"))
+  meta_info <- str_split(ftext[ids-1], "##")
+  add_del_info <- str_extract_all(ftext[ids], "[0-9]+")
+  meta_info <- sapply(meta_info, `[`, 1:4, USE.NAMES=FALSE) %>% t
+  add_del_info <- sapply(add_del_info, `[`, 1:3, USE.NAMES=FALSE) %>% t
+  out_df <- cbind(meta_info, add_del_info) %>% as.data.frame
+  colnames(out_df) <- c("sha", "author", "datetime", "message", "files_changed", "additions", "deletions")
+  out_df <- mutate(out_df, datetime = as.POSIXlt(datetime),
+                   files_changed = as.numeric(files_changed),
+                   additions = as.numeric(additions),
+                   deletions = as.numeric(deletions)) %>% as_tibble()
+  out_df
+}
+
+class_list <- read_excel("../batch_info/AY2122s2/class-list.xlsx")
+
+```
+
+## Get branches
+
+```{r}
+get_all_branches <- function(repo_name, owner_name) {
+  base_url <- "https://api.github.com"
+  br_path <- paste("repos", owner_name, repo_name, "branches", sep="/", collapse="")
+  all_branches <- GET(base_url, path=br_path)
+  all_br_out <- content(all_branches)
+  branch_names <- vapply(all_br_out, function(x) x[[1]], FUN.VALUE = "a")
+  branch_names
+}
+proj_repo_branches <- mapply(get_all_branches, proj_repos, owner_list)
+for(ii in seq_along(proj_repos)) {
+  cat(proj_repo_branches[[ii]], 
+      file=paste0(proj_repos[ii], ".branches"), 
+      sep="\n")
+}
+```
+
+## Working with git logs
+
+In the repository directory, run this command to retrieve all branches in a 
+repository.
+
+````
+filename="dsa3101-2120-01-air.branches"
+br_names=$(cat $filename)
+git fetch --all && \
+for branch in $br_names
+    do git switch $branch && \
+    git merge --ff-only || break
+done
+
+git log --oneline --shortstat --branches --pretty=format:"%H##%an##%ci##%s" > 01-air.log
+git log --all --author="wx12321" --branches --stat
+git log -Sdocker
+````
+
+Then the following function can be used to parse the log file:
+
+```{r}
+#air01_gh <- get_all_commits_gh_api(proj_repos[1])
+air01_logs <- parse_git_logs(logfile_names[1]) %>% 
+  filter(author != "singator", author != 'Vik') %>% 
+  mutate(date1 = as.Date(datetime)) 
+
+ggplot(air01_logs) + geom_bar(aes(x=author))
+
+summary_df1 <- group_by(air01_logs, author, date1) %>% 
+  summarise(additions=sum(additions, na.rm=TRUE), 
+            deletions=sum(deletions, na.rm=TRUE), 
+            files_changed=sum(files_changed, na.rm=TRUE), .groups="drop") 
+
+summary_df1 %>% mutate(date1 = as.Date(date1)) %>% 
+  filter(additions < 25000) %>% 
+  ggplot(aes(x=date1, y=additions, col=author)) + geom_point() + geom_line()
+
+```
