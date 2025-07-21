@@ -1,0 +1,72 @@
+---
+title: "Docker Assignment DSA3101"
+author: "AY 22/23 Sem II"
+output:
+  pdf_document: default
+  html_document: default
+urlcolor: blue
+---
+
+## Learning Outcomes
+
+1. To familiarise with writing Dockerfiles and Docker compose YAML files.
+2. To get comfortable reading about how to run images from Docker Hub.
+3. To generate basic API endpoints in a Flask Application.
+
+## Overview
+
+The task is to get these two containers up and running:
+
+1. A MySQL database containing information about users. The image containing 
+   the database can be obtained from this [Docker Hub site](https://hub.docker.com/repository/docker/singator/dsa3101-2220-db/general)
+1. A Flask application serving on port 5000 with 3 end points:
+    * `/` to display the `users_info` table
+    * `/register` to display a user-input form.
+    * `/result` to display the result of clicking 'Submit' button on the user-input form.
+    
+Accessing through a browser, the first endpoint should be a GET request that 
+displays the full table:
+```{r out.width="60%", echo=FALSE, fig.align="center"}
+knitr::include_graphics("figs/org_table.png")
+```
+
+Clicking on the link at the bottom will take you to the second endpoint. This endpoint 
+displays a registration form.
+```{r out.width="60%", echo=FALSE, fig.align="center"}
+knitr::include_graphics("figs/register_user.png")
+```
+
+Clicking on "Submit" will trigger a POST request to the third endpoint, that
+inserts rows into the database, and returns a page indicating if the database
+update was successful.
+```{r out.width="60%", echo=FALSE, fig.align="center"}
+knitr::include_graphics("figs/registration.png")
+```
+
+Returning to the original endpoint displays the new table:
+
+```{r out.width="60%", echo=FALSE, fig.align="center"}
+knitr::include_graphics("figs/updated_table.png")
+```
+    
+
+## Tasks
+
+1. Fill up the details in the Dockerfile
+2. Fill in the missing details in the docker-compose.yml file
+3. Create the end-points in the users.py file
+4. Create a requirements for installing the Python packages on the image.
+
+Place the above 4 files into a zip file and submit them as your assignment.
+
+## Notes/Hints
+
+* All end-points return HTML pages generated from Jinja templates, which you do not 
+  have to modify.
+* In the Python script, you only have to add the decorators.
+* Only the Flask container should be accessible to the outside world, and only through 
+port 5000.  
+* The database image does not need any further modification; it just needs to be 
+pulled and run.
+* There is no naming convention for the zip file to be submitted. If you made a 
+  mistake and need to submit a new version, you can do so. We will only grade the latest one.
