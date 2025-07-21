@@ -1,0 +1,75 @@
+---
+title: "HDB Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    css: "style1.css"
+---
+
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(plotly)
+library(DT)
+hdb <- readRDS("hdb_locs.rds") %>% as_tibble()
+```
+
+# Page 1
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Chart A
+
+```{r echo=FALSE}
+filter(hdb, yr==2019) %>% 
+  as_tibble() %>% 
+  group_by(mon, flat_type) %>% 
+  summarise(m_price = mean(ppsqm), .groups = "drop") %>%   
+  ggplot(aes(x=mon, y=m_price, col=flat_type)) + geom_point()+ 
+  geom_line()  -> p
+ggplotly(p)
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Chart B
+
+```{r echo=FALSE}
+p
+
+```
+
+### Chart C
+
+```{r}
+
+```
+
+
+# Page 2
+
+
+Column {data-width=250}
+-------------------------------------
+    
+This is a different page, as indicated on the navigation bar above.
+   
+Column {.tabset, data-width=750}
+-------------------------------------
+   
+### Plotly chart
+
+```{r echo=FALSE}
+ggplotly(p)
+```   
+ 
+### Chart 3
+    
+```{r}
+filter(hdb, yr == 2019) %>% 
+  select(yr:storey_max, ppsqm) %>% 
+  datatable()
+```

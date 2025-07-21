@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Model list</title>
+</head>
+<body>
+    These are the models currently stored on the server:
+    
+    <ul id="navigation">
+    {% for m in models %}
+        <li>{{m}}</li>
+    {% endfor %}
+    </ul>
+</body>
+</html>
