@@ -1,0 +1,13 @@
+# syntax=docker/dockerfile:1
+
+FROM python
+
+WORKDIR /app
+
+COPY dash_requirements.txt requirements.txt
+COPY dash_app.py app.py 
+COPY hdb_data.csv hdb_data.csv
+
+RUN pip3 install -r requirements.txt
+
+ENTRYPOINT [ "python", "app.py"]
