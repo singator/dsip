@@ -1,0 +1,205 @@
+---
+title: "Docker hands-on"
+output:
+  pdf_document: 
+    highlight: zenburn
+    toc: yes
+    toc_depth: 2
+  html_document: default
+urlcolor: blue
+---
+```{r load_libraries, message=FALSE, warning=FALSE, echo=FALSE}
+library(tidyverse)
+library(knitr)
+opts_chunk$set(echo=FALSE, fig.align = 'center')
+```
+
+## Preliminaries
+
+Before proceeding, ensure that:
+
+1. You have Docker Desktop installed.
+2. You have a docker hub account.
+
+## Hello World
+
+* The following command pulls an image from docker hub and runs a container from it.
+````
+docker run hello-world
+````
+* We can re-run it. It will be even faster because the image is stored locally.
+````
+docker ps -a                          # lists all containers 
+````
+* By default, Docker gives the container a random name. We can give our own name
+when we re-run it.
+````
+docker run --name foo_bar hello-world
+docker ps -a
+# Remember this: docker [COMMAND] --help gives you a summary of options
+#                docker help
+````
+* We can re-run the **container** as well.
+````
+docker start -a [CONTAINER_NAME]      # attaches stdout to our terminal.
+````
+* The two containers above were stopped automatically. To remove a stopped
+container, use
+````
+docker container rm [CONTAINER1] [CONTAINER2] ...
+````
+
+## Nginx Web-server
+
+* The previous container did not do much. It ran a command and exited.
+* Typical containers provide a **service**. This means that they will be 
+running continually, and waiting for a request of some sort.
+* A **web-server** serves web-sites, often written in html.
+* [nginx](https://nginx.org/en/) (pronounced engine-X) is a very popular
+webserver. 
+* Later, we shall see how it can translate addresses to provide a more friendly
+interface to users/requestors when multiple services are running on a host
+machine.
+
+````
+docker run --name test-nginx -d -p 8080:80 nginx
+````
+
+* This maps port 8080 on our host machine to port 80 on the nginx container. 
+* Go to http://localhost:8080/index.html to check if things are running ok.
+
+````
+docker stop test-nginx
+docker restart test-nginx
+````
+
+* There is an entire file-system sitting inside that little nginx container! To 
+"connect" to a running container, we can use `docker exec` to run a shell on 
+the container:
+````
+docker exec -it test-nginx /bin/bash
+````
+* The container does not have many applications installed - not even a text-editor. 
+It is debian-based, so to install the text editor nano, we use  the following commands:
+````
+apt update
+apt install nano
+````
+To exit this shell and return to your local machine, use
+````
+exit
+````
+
+* nginx looks for html pages in /usr/share/nginx/html to serve pages.
+* Create a html page of your own. Suppose you name it `my-page.html`. Copy it 
+over and go to http://localhost:8080/my-page.html.
+````
+docker cp my-page.html test-nginx:/usr/share/nginx/html
+````
+* If you are on the NUS network, share your IP address with your neighbour and
+visit their page.
+
+* Now try stopping, *removing*, and then and starting a new container from the 
+same image. The file we copied over will no longer be present. To remove the
+container (but not the image), we can run:
+````
+docker rm test-nginx
+````
+
+* In order to persist files/folders across containers, we can map (mount) a
+folder on our local drive to `/usr/share/nginx/html`.
+````
+docker run --name test-nginx -d -v <local-dir-name>:/usr/share/nginx/html -p 8080:80 nginx
+````
+
+## Installing Things on A Container
+
+* Now let's work with a python container. `Flask` is a python package for
+developing web applications. 
+* Let's see how it works locally first. First, 
+  * activate your Python 3.10 virtual environment, and then 
+  * change directory into the `docker_workshop/python_app` folder.
+````
+export FLASK_APP=hello
+flask run 
+````
+* Now if you visit http://localhost:5000/handler?value=hello , you will see 
+a html page instructing you to refer to the console. In the console, you should 
+see the text "hello" printed out. 
+* To kill the running program, use Ctrl-C on your console.
+
+* To run this app in a container, we would need to:
+  * pull down a Python image,
+  * install Flask on it,
+  * copy our script into it,
+  * run the flask command inside it, exposing the port 5000 to the local host.
+
+* These are the instructions that we need to put in the Dockerfile.
+
+````
+# syntax=docker/dockerfile:1
+
+FROM python:3.10-slim-bullseye
+
+WORKDIR /app
+
+COPY requirements.txt requirements.txt
+COPY hello.py hello.py
+RUN pip3 install -r requirements.txt
+ENV FLASK_APP hello
+
+ENTRYPOINT [ "python", "-u", "-m", "flask", "run", "--host=0.0.0.0"]
+````
+
+* First, we need to build the image on our local machine using the Dockerfile.
+````
+docker build -t py_flask_hello .
+````
+* You can verify that the image exists on your laptop, either through Docker Desktop 
+or with the following console command:
+````
+docker image ls
+````
+* To run the container from the image, we use this:
+````
+docker run --name test-flask -d -p 5000:5000 py_flask_hello
+````
+* If you now re-visit the previous URL http://localhost:5000/handler?value=hello, 
+you will see the same html page as before, but where's the console output, and how
+do we access it? We can use `docker logs` to list the output from the running 
+container:
+````
+docker logs test-flask
+````
+
+## Docker Compose
+
+* In this section, we are going to run two containers, and get them to
+communicate with one another. The two containers will perform the following
+tasks:
+
+1. **flask app**: a web application that will display the number of times the 
+page was reloaded.
+2. **redis app**: an in-memory database to store and increment the counter.
+
+* The important files in the docker compose environment are 
+    * `docker-compose.yml`
+    * The individual Dockerfiles for each container that is going to be running.
+
+* To start the network, we use 
+
+````
+docker compose up -d
+#docker compose restart
+````
+* Now visit http://localhost:8000. Every time you refresh the browser, the 
+counter on redis increments and updates the page.
+
+* To stop the network and remove the running containers, we use
+````
+docker compose down
+````
+
+## Summary and Futher readings:
+
+1. Many examples on compose files can be found [here](https://github.com/docker/awesome-compose).
