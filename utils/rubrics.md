@@ -1,8 +1,8 @@
 ## Project success
 
-+-----------------------+--------------------------+--------------------------+
+
 |                       | **Low score**            | **High score**           |
-+-----------------------+--------------------------+--------------------------+
+|-----------------------|--------------------------|--------------------------|
 | **Deployment**        | -    Services not        | -   Entire solution is   |
 |                       |     dockerised e.g.      |     Dockerized, "docker  |
 |                       |     model exists as a    |     compose" works.      |
@@ -19,7 +19,7 @@
 |                       |                          |     containers/services  |
 |                       |                          |     not covered in       |
 |                       |                          |     class.               |
-+-----------------------+--------------------------+--------------------------+
+|-----------------------|--------------------------|--------------------------|
 | **Code quality**      | -   Functions not        | -   A README file exists |
 |                       |     well-documented      |     in most directories, |
 |                       | -   Individuals create   |     to get a user        |
@@ -29,7 +29,7 @@
 |                       |     used.                | -   Pull requests used   |
 |                       |                          |     to check and review  |
 |                       |                          |     each other's code.   |
-+-----------------------+--------------------------+--------------------------+
+|-----------------------|--------------------------|--------------------------|
 | **Front-Back Sync**   | -   Front and Back ends  | -   Evidence of constant |
 |                       |     do not meet          |     communication        |
 |                       |     regularly, or user   |     between the two      |
@@ -53,7 +53,7 @@
 |                       |     cannot deliver what  |                          |
 |                       |     was initially        |                          |
 |                       |     promised.            |                          |
-+-----------------------+--------------------------+--------------------------+
+|-----------------------|--------------------------|--------------------------|
 | **Project Progress**  | -   Little forward       | -   Sub-teams            |
 |                       |     planning in terms of |     demonstrate ability  |
 |                       |     the end goal before  |     to redefine the      |
@@ -87,7 +87,7 @@
 |                       |                          |     model monitoring,    |
 |                       |                          |     exploration, design  |
 |                       |                          |     principles, etc.     |
-+-----------------------+--------------------------+--------------------------+
+|-----------------------|--------------------------|--------------------------|
 
 ## Tech report
 
